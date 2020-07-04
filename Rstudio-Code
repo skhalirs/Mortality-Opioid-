@@ -1,0 +1,852 @@
+## My project is about Accidental death by fatal drug overdose in 2014 over the 50 states in USA
+## This project is to search for possible solutions to reduce this mortality rate by looking at some of the 
+## factors that lead to person being prescribed opioids which sometimes might lead to death if abused or
+## with an accidental overdose
+## I am presenting this project to the Board of Health so it helps them to make more strict laws for 
+## doctors prescribing more opioids for a condition that could be treated with a non-opioid prescription
+
+
+## This cleaned data set contains 25000 observations from all 50 states
+
+
+library(ggplot2)
+
+
+## Reading in the prescribers-info dataset
+prescribers<-read.csv("C:/Users/zaidw/Documents/Sania/US Opioid Prescriptions/prescriber-info.csv",)
+View(prescribers)
+
+## Checking column names
+colnames(prescribers)
+
+## Checking number of rows and columns
+nrow(prescribers) #25000 rows
+
+ncol(prescribers) #256 columns
+
+## Checking the types of variables in the dataset
+sapply(prescribers, class)
+
+## Checking the type of doc (specialty) in this dataset
+typeofdoc<-length(unique(prescribers$Specialty))
+doctype<-data.frame(typeofdoc)
+types<-summary(prescribers$Specialty)
+doctype<-data.frame(types)
+View(doctype)
+
+#there are about 110 types of doctors
+
+# Checking to see which of these specialties prescribe more opioids, where 1 represents opiod-prescribed
+opioid<-prescribers[prescribers$Opioid.Prescriber=="1",]
+View(opioid)
+opioid_prescriber<-table(opioid$Specialty)
+opi_pres<-data.frame(opioid_prescriber)
+View(opi_pres)
+colnames(opi_pres)<- c("Speciality", "Count")
+opi_pres2  <- opi_pres[order(opi_pres[,2],decreasing=TRUE),] # to see the highest count of speciality that prescribes opioids
+View(opi_pres2)
+
+opi_pres3 <- head(opi_pres2, 10) #looking at top 10 in the dataset
+opi_pres4 <- tail(opi_pres2, 20) #looking at bottom 20 
+
+par(mar=c(11,4,4,4))
+
+#top 10 barplot
+
+barplot(opi_pres3[,2], names.arg = opi_pres3[,1], ylab= "Count", main= "Count of Opioid Prescriber per Speciality", 
+        col="#69b3a2", las=2 )
+
+#bottom 20 barplot
+
+barplot(opi_pres4[,2], names.arg = opi_pres4[,1], ylab= "Count", main= "Count of Opioid Prescriber per Speciality", 
+        col="#69b3a2", las=2 )
+
+###### With the top 10 barplot we see that Family Practice Speciality is the highest prescriber of Opioid prescriptions.
+###### Closely followed by internal medicine. I was surprised to notice that a lot of Nurse Practitioners and 
+###### Physician Assistants prescribing opioids but that may be natural since they might me easier to reach than
+###### their doctor or just getting a prescption renewal based on the history of what their doctor prescribed.
+
+###### Opioids are prescribed more in specialities which involve use of pain killers/inhibitors
+
+###### Looking at the bottom 20 barplot, I saw that pharmacy technicians prescribed 0 opioids and this validated 
+###### the data since pharm techs cannot prescribe any medications at all.
+
+## I also saw that a psychologist and a behaviour analyst prescribing the least or no opioids at all when I 
+## expected them to use opioids like adderall or vyvanse for mood theraphy. 
+
+
+## To check the percentage of specialties that prescribe opioids from the whole dataset
+Percentage_Opioid_Prescriber <- nrow(doctype) / nrow(opi_pres2) * 100
+
+###### 91.7% specilaities prescribe opioids as treatment for a condition which is surprisingly quite a high number.
+
+
+
+######## To see which gender prescribes more opioids
+
+gender <- table(opioid$Gender)
+opi_gender<-data.frame(gender)
+View(opi_gender)
+colnames(opi_gender) <- c("Gender","Count")
+
+barplot(opi_gender[,2], names.arg = opi_gender[,1], xlab= "Gender", ylab="Count", main= "Distribution of Opioid prescribed by Gender",
+        border="#69b3a2", col='red')
+
+male_opioid <- opioid[opioid$Gender == "M", ]
+nrow(male_opioid)
+
+
+male_percentage <- nrow(male_opioid) / nrow(opioid) * 100
+
+
+### 65% of opioid prescriptions are written by males. Makes me think that a female opioid prescriber might use
+### other meds to heal a condition before writing a prescription for an opioid.
+### This can also be related to what kinds of specialties male and female prescribers prefer.
+
+#To check the count of opioid prescriber per state
+
+state_opioid<- table(opioid$State)
+perstate<- data.frame(state_opioid)
+View(perstate)
+colnames(perstate)<-c("State","Count")
+perstate2 <- perstate[order(perstate[,2],decreasing = TRUE),] #too see highest count of opioids prescribed per state
+View(perstate2)
+top10 <- perstate2[1:10,]
+
+barplot(top10[,2], names.arg = top10[,1] , xlab= "State", ylab= "Count", main= "Count of Opioid Prescriber per State", border="#69b3a2", col=rgb(0.2,0.4,0.6,0.6))
+
+## From this barplot we see top 10 states that prescribe opioids.
+## California comes at the top as the state which prescribes the most opioids, followed by Texas and Florida.
+
+
+# Now I want to join the drug overdose deaths and see if it matches with the top 10 states
+
+overdoses<-read.csv("C:/Users/zaidw/Documents/Sania/US Opioid Prescriptions/overdoses 2014.csv",)
+View(overdoses)
+
+sapply(overdoses,class)
+
+overdoses$Deaths <- as.numeric(gsub(",","",overdoses$Deaths)) #to take the , out from deaths column
+
+View(overdoses)
+
+highestdeathperstate <- overdoses[order(overdoses$Deaths,decreasing = TRUE),] # Deaths per state
+View(highestdeathperstate)
+
+t10 <- highestdeathperstate[1:10,]
+
+barplot(t10[,3], names.arg = t10[,4] , xlab= "State", ylab= "Count", main= "Count of Deaths in Top 10 States", border="#69b3a2", col='red')
+
+## The highest death rate is in California, which is very obvious since that is the state prescribing the most opioid prescriptions as seen from the plot above.
+## I was expecting to see similar patterns in the death rate states but was surprised to see the next state as Ohio and Pennsylvania
+## Pennsylvania and Ohio were the 5th and 6th highest opioid-prescribing states but have higher death rates than Florida and Texas
+##  This was a very surprising insight, but it is noticeable that Florida and Texas are not far behind.
+
+#################################################################################################################
+# using ggplot to make it look nicer
+#################################################################################################################
+
+library(viridis)
+install.packages("hrbrthemes")
+library(hrbrthemes)
+
+ggplot(data= state, aes(fill=Abbrev, y=Deaths, x=Abbrev)) + 
+  geom_bar( stat="identity") +
+  scale_fill_viridis(discrete = T) +
+  ggtitle("Deaths per State") +
+  theme_ipsum() +
+  xlab("")
+
+#####################################################################
+
+
+# Making count column numeric
+top10state$`Count of times Opioid Prescribed` <- as.numeric(state$`Count of times Opioid Prescribed`)
+
+
+
+# Since I feel like the median household income per state plays an important role in this analysis
+# I am going to combine the 2014 median household income per state to prove my hypothesis
+
+library(readxl)
+
+median_income <- read_excel("C:/Users/zaidw/Documents/Sania/Median income per state.xlsx",)
+income <- median_income[c(3,7)]
+colnames(income)[2] <- "Median_Income"
+
+# combining perstate2 and highestdeathperstate on state to get the 50 states
+
+state <- merge(perstate2, highestdeathperstate, by.x = "State", by.y = "Abbrev" ) #combining by state for count and death rate
+View(state)
+
+colnames(state)[3] <- "State_Name"
+
+
+sapply(state, class) #checking class of state
+sapply(income, class) #checking class of income
+
+income$State <- as.factor(income$State)
+
+
+
+#combining by state for median household income in 2014
+data <- merge(state, income, by.x= "State_Name", by.y= "State")
+View(data)
+
+data <- data[c(1,2,4,5,3,6)]
+
+
+
+# I also think I want to see if the death rate is related in any way to education attainment for each state.
+# for this I am combining the % of high school graduate or higher for each state
+
+school <- read_excel("C:/Users/zaidw/Documents/Sania/school.xlsx",)
+highschool<- school[c(1,2)]
+
+sapply(highschool, class)
+highschool$State <- as.factor(highschool$State)
+
+data1 <- merge(data, highschool, by.x= "State_Name", by.y= "State" )
+View(data1)
+
+
+# Alex was using happiness data for the world, this inspired me to see the happiness index for each state and
+# if thats related to the death rate
+# the data set has features like emotional and well being rank, work environment rank, and community environment
+# rank which are useful features to see if that affects the count of opioids prescribed and also the death rate.
+
+#reading happiness index data
+happy <- read_excel("C:/Users/zaidw/Documents/Sania/happy.xlsx",)
+
+sapply(happy, class)
+happy$State <- as.factor(happy$State)
+
+data2 <- merge(data1, happy, by.x= "State_Name", by.y= "State")       # data combined with happiness 
+
+## Another important factor might be to look at the poverty index across all states
+
+poverty <- read_excel("C:/Users/zaidw/Documents/Sania/poverty.xlsx",)
+
+sapply(poverty, class)
+
+
+poverty$`2014 Poverty Rates (includes unrelated children)` <- as.numeric(poverty$`2014 Poverty Rates (includes unrelated children)`)
+
+pov <- poverty[c(1,2,4,5)]
+
+colnames(pov)[1] <- "Poverty_rank"
+
+data3 <- merge(data2, pov, by.x="State_Name", by.y= "State")         #final data with poverty combined
+
+sapply(data3, class)
+ 
+colnames(data3)[5] <- "Count_Opioid_Prescribed"
+
+data3$Count_Opioid_Prescribed <- as.numeric(data3$Count_Opioid_Prescribed)
+data3$Population <- as.numeric(data3$Population)
+
+#################################################### PCA  ###########################################
+
+## Now I am going to perform classification of death rate based on all of the features I could gather
+
+
+library(ggfortify)
+library(factoextra)
+
+
+opioidpca <- prcomp(data3[,c(3,5:15)], center = TRUE, scale. = TRUE) #using columns 3 and 5 through 15
+
+autoplot(opioidpca, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3) ## with different scenarios
+
+autoplot(opioidpca, label=TRUE, label.size=0.1, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3)
+
+#Scree plot
+fviz_eig(opioidpca) # barplot of percentage of explained variance
+
+fviz_pca_var(opioidpca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+summary(opioidpca)
+
+## Importance of components:
+##                           PC1    PC2    PC3     PC4     PC5     PC6     PC7     PC8     PC9    PC10    PC11   PC12
+## Standard deviation     2.2242 1.6603 1.1596 1.00488 0.90145 0.71055 0.55767 0.45804 0.20267 0.17343 0.14611 0.1041
+## Proportion of Variance 0.4123 0.2297 0.1121 0.08415 0.06772 0.04207 0.02592 0.01748 0.00342 0.00251 0.00178 0.0009
+## Cumulative Proportion  0.4123 0.6420 0.7540 0.83820 0.90592 0.94799 0.97391 0.99139 0.99481 0.99732 0.99910 1.0000
+
+
+### We have 12 Principal Components in this analysis, since we used 12 columns to see how they were related to 
+### the deaths when opioids prescribed.
+
+### PC1 + PC2 + Pc3 + PC4 = 83% PCA
+
+## First 4 PC's give the most variance to this classification. 
+## From the variables PCA graph its clearly seen that People in poverty by Household Income (in thousands) is 
+## in very high correlation with Count of Opioids Prescribed
+## The highest variance is shown by Poverty_Rank and Total Happiness Score. On the same side, Median Income is 
+## also somewhat correlated to the deaths.
+## Overall Happiness and Emotional and Physical Well-Being also are positively correlated with death as per the
+## high contribution in the graph.
+
+
+barplot(opioidpca$rotation[,1], main="PC 1 Loadings Plot", las=2)
+
+c.pc1 <- ifelse(opioidpca$rotation[,1] > 0, yes="green2", no="red2")
+n.pc1 <- ifelse(opioidpca$rotation[,1] > 0, yes=-0.01, no=opioidpca$rotation[,1]-0.01)
+par(mar=c(8,3,2,1)) # Set margins
+b1 <- barplot(opioidpca$rotation[,1], main="PC 1 Loadings Plot", col=c.pc1, las=2, axisnames=FALSE)
+abline(h=0) # Add horizontal line
+text(x=b1, y=n.pc1, labels=names(opioidpca$rotation[,1]), adj=1, srt=90, xpd=TRUE) # Add variable names
+
+## looking the the barplot for PC1(which has the highest cumulative variance), we see that deaths are related to
+## all of the factors that are green, Count of opioids prescribed, Overall Happiness Rank, Emotional and physical
+## well being rank, work environment rank, community and environment rank poverty rank, Household income (in thousands).
+
+## Highest correlation being with happiness overall happiness, emotional and physicall well being, work environment
+## and poverty.
+
+## Population, Median income, being a high school graduate show very little correlation to the deaths subsequent to
+## opioids prescribed.
+
+## This proves all the hypotheses that I had and I shows me that I was right in choosing some of these factors to 
+## know how and what may cause deaths by opioid prescriptions.
+
+
+########################## Correlation plots
+
+cor(data3$Deaths, data3$Population)                                            # -0.8 % correlation
+cor(data3$Deaths, data3$Count_Opioid_Prescribed)                               # 96% correlation  
+cor(data3$Deaths, data3$Median_Income)                                         # 1.8% correlation
+cor(data3$Deaths, data3$`Overall Happiness Rank`)                              # -9.9% correlation
+cor(data3$Deaths, data3$`Total Happiness Score`)                               # 12% correlation
+cor(data3$Deaths, data3$Poverty_rank)                                          # 22% correlation
+cor(data3$Deaths, data3$`People in Poverty by Household Income(in thousands)`) # 92% correlation  
+cor(data3$Deaths, data3$`2014 Poverty Rates (includes unrelated children)`)    # 25% correlation
+cor(data3$Deaths, data3$`%High school graduate`)                               # -45% correlation
+cor(data3$Deaths, data3$`‘Emotional & Physical Well-Being’ Rank`)              # -23% correlation
+cor(data3$Deaths, data3$`‘Work Environment’ Rank `)                            # 6.3% correlation
+cor(data3$Deaths, data3$`‘Community & Environment’ Rank`)                      # 22% correlation
+
+
+
+library(corrplot)
+
+data <- data3[c(4,5:15)] 
+
+#changing long column names since I want a correlation matrix
+
+colnames(data)[2] <- "Count"
+colnames(data)[3] <- "med_inc"       # median income column
+colnames(data)[4] <- "grad"          # high school grad column
+colnames(data)[6] <- "hap.score"     # happiness score
+colnames(data)[7] <- "emo"           # emotional well being column
+colnames(data)[8] <- "work"          # work environment column
+colnames(data)[9] <- "com.env"       # community and environment column
+colnames(data)[11] <- "poor.home"    # household income in 1000s column
+colnames(data)[12] <- "poverty"      #poverty index
+
+# using columns to see correlation
+
+d <- data[c(1,2,3,4,6:9,11,12)]
+
+
+Num.cols <- sapply(d, is.numeric)
+Cor.data <- cor(d[, Num.cols])
+corrplot(Cor.data, method = "circle")  ## plot for correlation
+
+# highest correlation of deaths is when opioids are prescribed and it is a poor home.
+
+library(GGally)
+
+ggpairs(data) # another correlation matrix to see how the data points spread
+
+
+
+
+
+############################################### Linear Regression #############################################
+
+######## Deaths (dependent variable) again Population (independent variable)
+
+plot(data3$Population , data3$Deaths, ylab="Deaths", xlab="Population", main = "Linear Regression plot with Population") 
+FCfit <- lm(formula = data3$Deaths ~ data3$Population)
+abline(FCfit, col="red")
+summary(FCfit)
+
+#using ggplot
+ggplot(data3, aes(y=Deaths, x=Population, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# very little relationship since line mostly horizontal
+
+############  Deaths against Count of opioids prescribed
+
+plot(data3$Count_Opioid_Prescribed , data3$Deaths, ylab="Deaths", xlab="Count", main = "Linear Regression plot with Count") 
+FCfit <- lm(formula = data3$Deaths ~ data3$Count_Opioid_Prescribed)
+abline(FCfit, col="red")
+summary(FCfit)
+
+##using ggplot
+ggplot(data3, aes(y=Deaths, x=Count_Opioid_Prescribed, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+#positive correlation 
+#as expected if the no. of opioids prescribed is more, it leads to more death rate. 
+
+############ Deaths against Median_Income
+
+plot(data3$Median_Income , data3$Deaths, ylab="Deaths", xlab="Median_Income", main = "Linear Regression plot with Median Income") 
+FCfit <- lm(formula = data3$Deaths ~ data3$Median_Income)
+abline(FCfit, col="red")
+summary(FCfit)
+
+## using ggplot 
+ggplot(data3, aes(y=Deaths, x=Median_Income, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# no correlation or very little correlation as suggested by the horizontal lines without any trend
+
+
+############ Deaths against Overall Happiness Rank
+
+plot(data3$`Overall Happiness Rank` , data3$Deaths, ylab="Deaths", xlab="Overall Happiness Rank", main = "Linear Regression plot with Overall Happiness Rank") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`Overall Happiness Rank`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`Overall Happiness Rank`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# the slight variation in trendline (-ve trend) shows that as happiness rank increases, the death rate decreases.
+
+################# Deaths against Total Happiness Score
+
+plot(data3$`Total Happiness Score` , data3$Deaths, ylab="Deaths", xlab="Total Happiness Score", main = "Linear Regression plot with Total Happiness Score") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`Total Happiness Score`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`Total Happiness Score`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# surprised to see a slight positive trendline in this relationship, from the plot, it shows as happiness score 
+# slightly increases, the death rate is also slightly increasing, but this relation is very slight.
+
+################# Deaths against poverty rank
+
+plot(data3$Poverty_rank , data3$Deaths, ylab="Deaths", xlab="Poverty Rank", main = "Linear Regression plot with Happiness Rank") 
+FCfit <- lm(formula = data3$Deaths ~ data3$Poverty_rank)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=Poverty_rank, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# +ve trendline suggests that as poverty rank increases, death rate also increases. 
+# 50th rank means most poor state, rank 1 most rich state
+
+
+############### Deaths against `People in Poverty by Household Income(in thousands)`
+
+plot(data3$`People in Poverty by Household Income(in thousands)` , data3$Deaths, ylab="Deaths", xlab="poor home (income in thousands)", main = "Linear Regression plot with a poor home (income in thousands)") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`People in Poverty by Household Income(in thousands)`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`People in Poverty by Household Income(in thousands)`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# a very positive trendline shows how high the correlation of death rate is with the people in a poor household 
+# earning an income only in thousands.
+# This is surprising to note when we know that USA is a first world developed country but some sections of the 
+# country are suffering way more and have to rely on opioids as their only solution to their problems.
+
+#################### Deaths against 2014 Poverty Rates (including unrelated children)
+
+
+plot(data3$`2014 Poverty Rates (includes unrelated children)` , data3$Deaths, ylab="Deaths", xlab="2014 poverty rate(incl. unrelated children", main = "Linear Regression plot with 2014 Poverty Rate") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`2014 Poverty Rates (includes unrelated children)`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`2014 Poverty Rates (includes unrelated children)`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# +ve correlation suggests how the death rate rises, with rising poverty rate in each state.
+
+
+######################## Deaths against High School Grad percentage
+
+
+plot(data3$`%High school graduate` , data3$Deaths, ylab="Deaths", xlab="High School Grad %", main = "Linear Regression plot with Education") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`%High school graduate`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`%High school graduate`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# -ve trendline shows as the percentage of being a high school grad increases, the death rate decreases.
+
+################ Deaths against Emotional and Physical Well Being Rank
+
+
+plot(data3$`‘Emotional & Physical Well-Being’ Rank` , data3$Deaths, ylab="Deaths", xlab="Emotional & Well-being Rank", main = "Linear Regression plot with Emotional and Well-Being Rank") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`‘Emotional & Physical Well-Being’ Rank`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`‘Emotional & Physical Well-Being’ Rank`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# -ve trendline suggests, as the emotional and well-being rank increases, the death rate decreases.
+
+
+########################### Deaths against Work Environment Rank
+
+plot(data3$`‘Work Environment’ Rank ` , data3$Deaths, ylab="Deaths", xlab="Work Environment Rank", main = "Linear Regression plot with Work Environment Rank") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`‘Work Environment’ Rank `)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`‘Work Environment’ Rank `, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# slight +ve trendline, suggests there is slight relation between the death rate increasing when the work
+# environment is stressful
+
+
+############################### Deaths against Community and Environment Rank
+
+plot(data3$`‘Community & Environment’ Rank` , data3$Deaths, ylab="Deaths", xlab="community & Environment Rank", main = "Linear Regression plot with Community & Environment Rank") 
+FCfit <- lm(formula = data3$Deaths ~ data3$`‘Community & Environment’ Rank`)
+abline(FCfit, col="red")
+summary(FCfit)
+
+ggplot(data3, aes(y=Deaths, x=`‘Community & Environment’ Rank`, color=2)) +
+  geom_point() + stat_smooth(method="lm", color= 1)
+
+# +ve trendline shows the increase in death rate when being in a stressful state because of community and 
+# our surroundings(environment) pressure.
+
+
+
+
+
+################################################################################################################
+
+# Since my data is labeled and categorical (not continuous), I am going to use KNN, SVM and Classification and 
+# Regression Tree (CART) predictive algorithms to predict the death rate with opioid use prescriptions prescribed.
+
+############################################ K-NN  ##############################################################
+
+#using all features to see the predictive accuracy of death rate
+
+library(dataPreparation)
+library(class)
+library(dplyr)
+
+set.seed(123)
+
+train_index <- sample(1:nrow(data), 0.8 * nrow(data)) # 80% training data
+#View(train_index)
+
+test_index <- setdiff(1:nrow(data), train_index) # 20% test data
+
+x_train <- data[train_index,-1] #input -1 represents removing death column to get classification
+y_train <- data[train_index, "Deaths"] #output
+
+x_test <- data[test_index,-1] #input
+y_test <- data[test_index, "Deaths"] #output of test set
+
+
+pr <- knn(x_train,x_test,cl=y_train,k=3) # setting k as 3 in the first instance
+#View(pr)
+
+tb <- table(pr,y_test)  # confusion matrix
+#View(tb)
+
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}  # accuracy
+accuracy(tb)
+
+## when we use k=3 we get an accuracy of 0
+## k=5, gives accuracy of 10
+## k=9, gives accuracy of 0
+## k=20 gave me an accuracy of 20
+
+################################################################################################
+
+set.seed(123)
+
+train_index <- sample(1:nrow(data[c(1,2,3,6,8,9,10,11,12)]), 0.90 * nrow(data)) # 90% training data
+#View(train_index)
+
+test_index <- setdiff(1:nrow(data[c(1,2,3,6,8,9,10,11,12)]), train_index) # 10% test data
+
+x_train <- data[train_index,-1] #input -1 represents removing death column to get classification
+y_train <- data[train_index, "Deaths"] #output
+
+x_test <- data[test_index,-1] #input
+y_test <- data[test_index, "Deaths"] #output of test set
+
+
+pr <- knn(x_train,x_test,cl=y_train,k=50) # setting k as 50 in the first instance
+#View(pr)
+
+tb <- table(pr,y_test)  # confusion matrix
+#View(tb)
+
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}  # accuracy
+accuracy(tb)
+
+
+# Using just the data which gives me high (or positive) correlation, when using k as 50 I got an accuracy of 10.
+# k= 75, accuracy= 10
+
+# when using 90% as train index, and 10 % as test index and k=50, accuracy is 20%
+
+################################################################################################################
+
+#################### Lets normalise the data to see if i get a better outcome in accuracy for my data ##########
+
+################################################################################################################
+
+##the normalization function is created
+nor <-function(x) { (x -min(x))/(max(x)-min(x))   }
+
+##normalization function is created
+data_nor <- as.data.frame(lapply(data3[,c(3:15)], nor))
+
+## correlation matrix of normalised data
+ggpairs(data_nor)
+
+set.seed(123)
+
+train_index <- sample(1:nrow(data_nor[c(1,2,3,4,7,9:13)]), 0.90 * nrow(data)) # 90% training data
+#View(train_index)
+
+test_index <- setdiff(1:nrow(data_nor[c(1,2,3,4,7,9:13)]), train_index) # 10% test data
+
+x_train <- data_nor[train_index,-2] #input -2 represents removing death column to get classification
+y_train <- data_nor[train_index, "Deaths"] #output
+
+x_test <- data_nor[test_index,-2] #input
+y_test <- data_nor[test_index, "Deaths"] #output of test set
+
+
+pr <- knn(x_train,x_test,cl=y_train,k=3) # setting k as 3 in the first instance
+#View(pr)
+
+tb <- table(pr,y_test)  # confusion matrix
+#View(tb)
+
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}  # accuracy
+accuracy(tb)
+
+#after normalising data and choosing columns with high correlation, setting k as 3, I got an accuracy of 20.
+
+# Normalising data gave me a higher accuracy.
+
+############################################### SVM ############################################################
+
+
+library(e1071)
+library(caTools)
+set.seed(123)
+
+split = sample.split(data_nor$Deaths, SplitRatio = 0.7)
+training_set = subset(data_nor, split == TRUE)
+test_set = subset(data_nor, split == FALSE)
+
+training_set1<- training_set[c(1,2,3,4,7,9:13)]
+#View(training_set1)
+test_set<- test_set[c(1,2,3,4,7,9:13)] 
+#View(test_set)
+
+sapply(training_set1, class)
+sapply(test_set, class)
+
+# Feature Scaling
+training_set1[-2] = scale(training_set1[-2])
+test_set[-2] = scale(test_set[-2])
+
+# Fitting SVM to the Training set
+library(e1071)
+classifier = svm(formula = factor(Deaths) ~.,
+                 data = training_set1,
+                 type = 'C-classification',
+                 kernel = 'linear')
+
+summary(classifier)
+
+# Predicting the Test set results
+y_pred = predict(classifier, newdata = test_set[-2])
+
+# Making the Confusion Matrix for test set
+cm = table(test_set[,2], y_pred)
+
+summary(factor(training_set1$Deaths))
+
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(cm)
+
+
+#using a 70-30% split of my normalised data set i got accuracy of 13.33%
+
+############################################################################################ another svm split
+
+## Using only those colums that gave high correlation to see if I can get a better accuracy
+
+## Count of opioid prescribed and poor home (people.in.poverty.by.household.income.in.thousands)
+
+set.seed(123)
+
+split = sample.split(data_nor$Deaths, SplitRatio = 0.8)
+training_set = subset(data_nor, split == TRUE)
+test_set = subset(data_nor, split == FALSE)
+
+training_set1<- training_set[c(2,3,12)]
+#View(training_set1)
+test_set<- test_set[c(2,3,12)] 
+#View(test_set)
+
+sapply(training_set1, class)
+sapply(test_set, class)
+
+# Feature Scaling
+training_set1[-1] = scale(training_set1[-1])
+test_set[-1] = scale(test_set[-1])
+
+# Fitting SVM to the Training set
+library(e1071)
+classifier = svm(formula = factor(Deaths) ~.,
+                 data = training_set1,
+                 type = 'C-classification',
+                 kernel = 'linear')
+
+summary(classifier)
+
+# Predicting the Test set results
+y_pred = predict(classifier, newdata = test_set[-1])
+
+# Making the Confusion Matrix for test set
+cm = table(test_set[,1], y_pred)
+
+summary(factor(training_set1$Deaths))
+
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(cm)
+
+##### by using 80-20% split of data, I get an accuracy of 10%. My analysis is predicted correctly with a 
+##### confidence of 10%
+
+
+#################################################################################################################
+
+############## Using Logistic Regression since our model is categorical and labeled supervised type. ############
+
+########################################### Logistic Regression #################################################
+
+
+colnames(data_nor)[4] <- "med_inc"            # median income column
+colnames(data_nor)[5] <- "grad"               # high school grad % column
+colnames(data_nor)[6] <- "overall_happ_rank"  # overall happiness rank
+colnames(data_nor)[7] <- "hap.score"          # happiness score
+colnames(data_nor)[8] <- "emo"                # emotional well being column
+colnames(data_nor)[9] <- "work"               # work environment column
+colnames(data_nor)[10] <- "com.env"           # community and environment column
+colnames(data_nor)[12] <- "poor.home"         # median household income in 1000s column
+colnames(data_nor)[13] <- "poverty"           # poverty index
+
+sapply(data_nor, class)
+
+
+# Logistics Regression with all features, no data split
+glm.fit <- glm(Deaths ~ . , data = data_nor , family = binomial)
+
+summary(glm.fit)
+
+# AIC of 45.205 
+
+################ lets split
+
+library(caret)
+
+set.seed(3456)
+trainIndex <- createDataPartition(data_nor$Deaths, p = .67,
+                                  list = FALSE,
+                                  times = 1)
+
+Train <- data_nor[ trainIndex,]
+Test  <- data_nor[-trainIndex,]
+
+# Logistic Regression Model
+model <- glm(Deaths ~ ., data = data_nor, family= binomial)
+
+Test$model_prob <- predict(model, Test, type = "response")
+
+Test <- Test  %>% mutate(model_pred = 1*(model_prob > .53) + 0,
+                         visit_binary = 1*(Deaths == "Yes") + 0)
+
+Test <- Test %>% mutate(accurate = 1*(model_pred == visit_binary))
+sum(Test$accurate)/nrow(Test) #### gives accuracy
+
+
+##################################### 78.57 % accuracy using generalised linear regression model
+
+####################################################################################################################
+################################# CART - Classification and Regression Tree #####################################
+###################################################################################################################
+
+library(tidyverse)
+library(caret)
+library(rpart)
+
+
+
+training.samples <- data_nor$Deaths %>% 
+  createDataPartition(p = 0.8, list = FALSE)
+train.data  <- data_nor[training.samples, ]
+test.data <- data_nor[-training.samples, ]
+
+# Build the model
+set.seed(123)
+
+model1 <- rpart(Deaths ~ ., data = train.data, method = "class")
+
+# Plot the trees
+par(xpd = NA) # Avoid clipping the text in some device
+plot(model1)
+text(model1, digits = 3)
+
+# Make predictions on test data
+predicted.classes <- model1 %>% 
+  predict(test.data, type = "class")
+head(predicted.classes)
+
+# Compute model accuracy rate on test data
+mean(predicted.classes == test.data$Deaths)
+
+
+################### Tuning
+install.packages("party")
+library(party)
+set.seed(123)
+model <- train(
+  Deaths ~., data = data_nor, method = "ctree2",
+  trControl = trainControl("cv", number = 10),
+  tuneGrid = expand.grid(maxdepth = 3, mincriterion = 0.95 )
+)
+plot(model$finalModel)
+
+# Make predictions on the test data
+predicted.classes <- model %>% predict(test.data)
+# Compute model accuracy rate on test data
+mean(predicted.classes == test.data$Deaths)
+
+summary(predicted.classes)
